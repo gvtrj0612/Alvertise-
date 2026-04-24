@@ -2,7 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 export async function middleware(request: NextRequest) {
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+  const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+  const token = await getToken({ req: request, secret });
   const isLoggedIn = !!token;
   const isOnDashboard = request.nextUrl.pathname.startsWith("/dashboard");
   const isOnAuth =
