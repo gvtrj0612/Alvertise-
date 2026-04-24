@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+export const dynamic = "force-dynamic";
 
 const PLATFORM_SIZES: Record<string, "1024x1024" | "1792x1024" | "1024x1792"> = {
   instagram: "1024x1024",
@@ -19,6 +19,7 @@ const PLATFORM_SIZES: Record<string, "1024x1024" | "1792x1024" | "1024x1792"> = 
 };
 
 export async function POST(request: NextRequest) {
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   // Check API key
   if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === "sk-proj-paste-your-key-here") {
     return NextResponse.json(
