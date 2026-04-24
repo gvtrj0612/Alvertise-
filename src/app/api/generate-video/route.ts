@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import Replicate from "replicate";
-import OpenAI from "openai";
 import { auth } from "@/lib/auth";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
@@ -8,11 +7,11 @@ import { buildOptimizationSignals } from "@/lib/optimization-learning";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import crypto from "crypto";
+import { getOpenAI } from "@/lib/openai";
 
 type OverlayStyle = "cinematic-lower-third" | "headline-center" | "top-banner";
 
 const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export const maxDuration = 300; // 5 minutes — needed for multi-scene generation
 
@@ -271,6 +270,7 @@ async function generateVoiceover(
 
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
+      const openai = getOpenAI();
       const response = await openai.audio.speech.create({
         model: "tts-1",
         voice: voice as "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer",
@@ -363,6 +363,7 @@ Return ONLY valid JSON in this exact schema:
   ]
 }`;
 
+  const openai = getOpenAI();
   const translated = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     temperature: 0.2,
@@ -456,6 +457,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const openai = getOpenAI();
     const {
       headline,
       primaryText,

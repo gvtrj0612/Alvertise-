@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
 import { auth } from "@/lib/auth";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { getOpenAI } from "@/lib/openai";
 
 const LANGUAGE_NAMES: Record<string, string> = {
   en: "English",
@@ -25,6 +23,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const { text, targetLanguage, fields } = await request.json();
+    const openai = getOpenAI();
 
     if (!targetLanguage || !LANGUAGE_NAMES[targetLanguage]) {
       return NextResponse.json(

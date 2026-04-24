@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { getOpenAI } from "@/lib/openai";
 
 // POST /api/ads/ab-test - Create A/B test variants from existing ad
 export async function POST(request: NextRequest) {
@@ -14,6 +12,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const { adId } = await request.json();
+    const openai = getOpenAI();
 
     if (!adId) {
       return NextResponse.json(

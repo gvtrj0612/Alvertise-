@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
 import { auth } from "@/lib/auth";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { getOpenAI } from "@/lib/openai";
 
 // POST /api/poster - Generate an ad poster design description
 export async function POST(request: NextRequest) {
@@ -17,6 +15,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const openai = getOpenAI();
     const { headline, primaryText, callToAction, platform, theme, colorPalette, audience } =
       await request.json();
 

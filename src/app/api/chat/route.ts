@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { sanitizeMessages } from "@/lib/sanitize";
 import { buildFeedbackLearningContext } from "@/lib/feedback-learning";
 import { buildOptimizationSignals } from "@/lib/optimization-learning";
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { getOpenAI } from "@/lib/openai";
 
 const SYSTEM_PROMPT = `You are Alvertise, a world-class AI ad copywriter with deep expertise in performance marketing, consumer psychology, and conversion optimization. You create ads that rival top agencies.
 
@@ -94,6 +92,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const { messages, customization, conversationId, preferredLanguage } = await request.json();
+    const openai = getOpenAI();
 
     // Sanitize user messages for prompt injection
     const { sanitized: safeMessages, threats } = sanitizeMessages(messages);

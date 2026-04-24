@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
 import { auth } from "@/lib/auth";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { getOpenAI } from "@/lib/openai";
 
 const PLATFORM_SIZES: Record<string, "1024x1024" | "1792x1024" | "1024x1792"> = {
   instagram: "1024x1024",
@@ -37,6 +35,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const openai = getOpenAI();
     const {
       headline,
       primaryText,

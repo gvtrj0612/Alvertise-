@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { getOpenAI } from "@/lib/openai";
 
 const HELP_SYSTEM_PROMPT = `You are Alvertise's AI Help Bot. You help users understand and use the Alvertise platform.
 
@@ -40,6 +38,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const { messages } = await request.json();
+    const openai = getOpenAI();
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",

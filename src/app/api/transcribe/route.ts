@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { getOpenAI } from "@/lib/openai";
 
 export async function POST(request: NextRequest) {
   if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === "sk-proj-paste-your-key-here") {
@@ -12,6 +10,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const openai = getOpenAI();
     const formData = await request.formData();
     const audioFile = formData.get("audio") as File;
 
