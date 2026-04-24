@@ -3,7 +3,7 @@ import OpenAI from "openai";
 import { auth } from "@/lib/auth";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+export const dynamic = "force-dynamic";
 
 const LANGUAGE_NAMES: Record<string, string> = {
   en: "English",
@@ -14,6 +14,7 @@ const LANGUAGE_NAMES: Record<string, string> = {
 };
 
 export async function POST(request: NextRequest) {
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const ip = getClientIp(request);
   const { success, response: rateLimitResponse } = rateLimit(ip, "chat");
   if (!success) return rateLimitResponse!;

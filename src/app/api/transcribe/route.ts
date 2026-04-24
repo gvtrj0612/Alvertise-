@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === "sk-proj-paste-your-key-here") {
     return NextResponse.json(
       { error: "OpenAI API key not configured. Add your OPENAI_API_KEY to .env.local" },

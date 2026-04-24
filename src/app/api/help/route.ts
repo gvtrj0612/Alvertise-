@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+export const dynamic = "force-dynamic";
 
 const HELP_SYSTEM_PROMPT = `You are Alvertise's AI Help Bot. You help users understand and use the Alvertise platform.
 
@@ -34,6 +34,7 @@ Alvertise is an AI-powered advertisement generation platform. It features:
 - If you don't know the answer, suggest contacting support@alvertise.ai.`;
 
 export async function POST(request: NextRequest) {
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const ip = getClientIp(request);
   const { success, response: rateLimitResponse } = rateLimit(ip, "chat");
   if (!success) return rateLimitResponse!;
