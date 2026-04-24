@@ -1,0 +1,825 @@
+================================================================================
+ADGEN PROJECT - VERY DETAILED TECHNICAL ANALYSIS
+Generated: 2026-04-08
+Workspace: C:\Users\garvi\OneDrive\Desktop\AdGen\frontend
+================================================================================
+
+LATEST IMPLEMENTATION UPDATE (2026-04-11)
+--------------------------------------------------------------------------------
+This section captures all major changes implemented after the original analysis
+generation. It reflects the current behavior of voice flow, poster quality,
+video overlay styling, and feedback-driven prompt optimization.
+
+U1) VOICE FLOW LOGIC (CONTINUOUS UNTIL VARIANTS, THEN AUTO-STOP)
+--------------------------------------------------------------------------------
+File:
+- src/app/(dashboard)/dashboard/generate/page.tsx
+
+Previous behavior observed:
+- Voice mode either auto-looped indefinitely or required manual restart every
+  turn depending on interim patch state.
+
+Current implemented behavior:
+- While the conversation is still in information-gathering phase (assistant is
+  asking follow-up questions, no ad variants returned), voice resumes
+  automatically after TTS playback.
+- Once the assistant returns final ad variants (ads array present), the voice
+  recorder is stopped and state returns to idle.
+- After variants are shown, the assistant does NOT keep listening to ambient
+  room audio and does NOT continue replying unexpectedly.
+
+Practical UX outcome:
+- Hands-free multi-turn discovery conversation.
+- Safe, explicit stop point at "3 variants delivered" stage.
+
+U2) VIDEO OVERLAY RELIABILITY + STYLE PRESETS
+--------------------------------------------------------------------------------
+Files:
+- src/lib/ffmpeg.ts
+- src/app/api/generate-video/route.ts
+- src/app/api/generate-video/status/[jobId]/route.ts
+- src/components/chat/video-preview.tsx
+
+What was added:
+1) Overlay style model:
+   - cinematic-lower-third
+   - headline-center
+   - top-banner
+
+2) Overlay hardening:
+   - Added text sanitization before drawtext composition.
+   - Added explicit font preflight and failure signaling when no compatible
+     font is found.
+   - Added stronger deterministic drawtext assembly with controlled spacing,
+     border, shadow, and box values per style.
+
+3) End-to-end style propagation:
+   - API accepts overlayStyle in /api/generate-video.
+   - Job state persists overlayStyle.
+   - Status route maps overlay entries with job-selected style.
+
+4) UI support:
+   - Video generation panel includes Overlay Style selector.
+   - Generation progress UI updated with clearer stage language and a visual
+     refresh.
+
+Current known behavior:
+- Overlay style is now user-selectable and applied consistently through
+  generation pipeline.
+- FFmpeg font absence is surfaced as an explicit overlay failure condition
+  instead of silent degradation.
+
+U3) POSTER QUALITY UPGRADE + MISSING OPTIONS RESTORED
+--------------------------------------------------------------------------------
+Files:
+- src/components/chat/ad-customization-panel.tsx
+- src/components/chat/poster-preview.tsx
+- src/app/api/generate-image/route.ts
+
+What was added:
+1) Missing poster tuning options restored in UI:
+   - posterStyle: cinematic | minimal | bold | luxury
+   - posterLayout: centered | split | editorial | story
+   - posterIntensity: soft | balanced | strong
+
+2) Poster preview visual upgrade:
+   - Replaced flat/basic fallback composition with a premium styled template.
+   - Added richer backdrop rendering, glow layering, structured panel accents,
+     stronger hierarchy, and improved readability for headline/CTA.
+   - Updated poster action copy from generic "Canvas Poster" to stronger
+     "Premium Poster" intent.
+
+3) AI poster prompt enhancement:
+   - /api/generate-image now consumes posterStyle/posterLayout/posterIntensity
+     and maps these into explicit prompt guidance.
+   - Prompt now enforces stronger visual hierarchy and cleaner compositional
+     constraints.
+
+Current known behavior:
+- Non-AI fallback posters are materially improved and less generic.
+- AI poster output is better guided by user-selected style controls.
+
+U4) FEEDBACK-DRIVEN PROMPT OPTIMIZATION LOOP (FIRST ITERATION)
+--------------------------------------------------------------------------------
+Files:
+- src/lib/feedback-learning.ts (new)
+- src/app/api/chat/route.ts
+
+What was implemented:
+1) New feedback-learning aggregator module:
+   - Reads up to recent 250 feedback entries for the authenticated user.
+   - Aggregates performance signals from AdFeedback + related Ad context.
+   - Computes:
+     - average and median score
+     - best platforms by score trend
+     - best tones by score trend
+     - best CTAs by score trend
+     - common emotional reactions
+     - most-mentioned aspects
+     - repeated weak/negative phrasing to avoid
+
+2) Prompt-level optimization injection:
+   - /api/chat now appends a "Feedback Learning Signals" block into the system
+     prompt when user feedback history exists.
+   - Model is explicitly instructed to:
+     - bias toward historically higher-performing patterns
+     - avoid repeated weak patterns
+     - align defaults to user's measured feedback trends
+
+Important scope clarification:
+- This is optimization via prompt conditioning (online heuristic learning), not
+  model fine-tuning/retraining.
+- It still provides measurable personalization and quality steering for future
+  generations.
+
+U5) IMPLEMENTATION STATUS SUMMARY (AS OF 2026-04-11)
+--------------------------------------------------------------------------------
+Completed and active:
+- Conditional continuous voice mode with final-stop behavior.
+- Overlay reliability hardening + style presets + UI selector.
+- Poster UI options restored and end-to-end wired.
+- Premium fallback poster rendering upgrade.
+- AI poster prompt quality improvements with style/layout/intensity controls.
+- Feedback aggregation and automatic prompt optimization in chat generation.
+
+Still not fully implemented (known future work):
+- Database-native event timeline for every video job stage (currently job state
+  still partially file-based for video pipeline).
+- Long-term feedback profile materialization/caching table (current aggregation
+  happens at request time for the chat route).
+- Full adaptive weighting loop combining sentiment + engagement metrics into a
+  persisted ranking policy.
+
+U6) OPERATIONAL VERIFICATION QUICKLIST
+--------------------------------------------------------------------------------
+Voice:
+- Start voice mode, complete multi-turn Q/A, confirm auto-resume.
+- Confirm voice auto-stops immediately when variants are returned.
+
+Poster:
+- Validate controls appear: style/layout/intensity.
+- Generate premium poster and AI background; verify output readability and
+  hierarchy.
+
+Video overlay:
+- Select each overlay style and generate sample video.
+- Verify overlays render with expected placement, contrast, and timing.
+
+Feedback learning:
+- Submit multiple feedback entries with varying sentiment.
+- Generate new ads and inspect response quality drift toward high-scoring
+  styles/CTAs/tones.
+
+Database visibility:
+- Use Prisma Studio to inspect AdFeedback, Ad, Conversation, Message linkage and
+  confirm feedback history is present for optimization.
+
+
+0) EXECUTIVE SNAPSHOT
+--------------------------------------------------------------------------------
+AdGen is a full-stack AI ad generation platform built as a single Next.js 14
+application (App Router) with both UI and backend APIs in one codebase.
+
+The product focus is:
+- Conversational ad copy generation
+- Voice-first interaction (speech input + spoken responses)
+- AI poster generation
+- AI video commercial generation
+- Campaign and ad management dashboard
+- Public gallery and feedback loop
+- Sentiment + emotion analysis for ad feedback
+
+Tech stack is modern TypeScript-first, with Prisma + SQLite for persistence,
+NextAuth for authentication, OpenAI + Replicate for AI features, and FFmpeg for
+video post-processing.
+
+Observed codebase scope:
+- ~92 files in src + prisma
+- ~25 files under src/app/api (API surface)
+
+
+1) REPOSITORY STRUCTURE (PRACTICAL VIEW)
+--------------------------------------------------------------------------------
+Primary app location:
+- frontend/
+
+Core directories in frontend:
+- src/app/                  Next.js App Router pages + route handlers
+- src/app/api/              Backend endpoints (Route Handlers)
+- src/components/           Shared UI and feature components
+- src/hooks/                Custom React hooks
+- src/lib/                  Utility modules and integrations
+- src/store/                Zustand state stores
+- src/types/                Shared type definitions
+- prisma/                   Database schema, migrations, seed
+- public/                   Static assets + generated image/video outputs
+
+Important root files:
+- package.json              Scripts + dependencies
+- next.config.mjs           Next config + experimental server package settings
+- tailwind.config.ts        Theme and animations
+- src/app/globals.css       Design tokens + utility classes
+- tsconfig.json             TypeScript config
+- PROJECT_DOCUMENTATION.txt Existing authored documentation (high-level)
+
+Note on tmp folders:
+- Multiple tmpclaude-* folders are present and look like temporary artifacts,
+  not core product source.
+
+
+2) PRODUCT CAPABILITIES (WHAT HAS BEEN BUILT)
+--------------------------------------------------------------------------------
+2.1 Landing + public entry flow
+- Public landing page at / with feature marketing blocks.
+- Public gallery page at /gallery for published ads.
+- Auth entry points: /login and /signup.
+
+2.2 Authenticated dashboard
+- /dashboard                Summary cards + recent activity + chart
+- /dashboard/generate       Main AI creation experience
+- /dashboard/ads            Ad inventory management + A/B testing controls
+- /dashboard/campaigns      Campaign listing/management
+- /dashboard/campaigns/new  Campaign creation form
+- /dashboard/analytics      Performance and sentiment visualization
+- /dashboard/settings       Profile, security, appearance, billing view
+- /dashboard/help           In-app help center + help bot UI
+
+2.3 AI workflows
+- Chat-driven ad generation (GPT model)
+- Voice input (audio recording + silence detection + transcription)
+- Voice output (TTS playback)
+- Poster generation (DALL-E style image generation endpoint)
+- Video commercial pipeline:
+  1) Script generation
+  2) Scene-level model rendering
+  3) Job status polling
+  4) FFmpeg merge with overlays + audio
+
+2.4 Management and optimization
+- CRUD operations for ads and campaigns
+- Favoriting and publishing controls on ads
+- Public interaction with published ads (like + feedback)
+- Engagement metrics tracking (impressions/clicks/likes/shares)
+- AI-generated A/B test variant creation
+
+2.5 Feedback intelligence
+- Feedback records stored per ad
+- Sentiment score + class
+- Emotion category extraction
+- Aspect-level feedback extraction (headline/copy/cta/visuals)
+
+
+3) TECHNOLOGY STACK (PINNED FROM package.json)
+--------------------------------------------------------------------------------
+Framework/runtime:
+- next 14.2.35
+- react 18
+- react-dom 18
+- typescript 5
+
+Auth/security-related:
+- next-auth 5.0.0-beta.30
+- @auth/core
+- bcryptjs
+
+Database:
+- prisma 5.22.0
+- @prisma/client 5.22.0
+- sqlite via Prisma datasource
+
+AI/media:
+- openai 6.27.0
+- replicate 1.4.0
+- fluent-ffmpeg 2.1.3
+- @ffmpeg-installer/ffmpeg
+
+UI and UX:
+- tailwindcss 3.4.1
+- framer-motion
+- lucide-react
+- recharts
+- react-hot-toast
+- react-markdown
+
+State/utilities:
+- zustand
+- axios
+- clsx + tailwind-merge + class-variance-authority
+- date-fns
+
+Dev tooling:
+- eslint + eslint-config-next
+- postcss
+- @types packages for TS
+
+
+4) FRONTEND ARCHITECTURE DETAILS
+--------------------------------------------------------------------------------
+4.1 App Router organization
+- Route groups are used:
+  - (auth)
+  - (dashboard)
+- Shared root layout wraps with SessionProvider and Toaster.
+
+4.2 Theme and visual system
+- CSS token system with HSL variables in globals.css
+- Supports dark mode via class strategy (Tailwind darkMode: class)
+- Custom utility classes:
+  - .glass
+  - .gradient-border
+  - .glow-hover
+  - .text-gradient
+  - .hover-underline
+- Custom animations in tailwind config:
+  - fade-in, slide-in-left, gradient-shift, shimmer, float, pulse-glow
+
+4.3 State management with Zustand
+Chat store (src/store/chat-store.ts):
+- message list (user + assistant)
+- typing state
+- conversationId
+- voice mode toggles/state/interim transcript
+- welcome bootstrap message
+
+UI store (src/store/ui-store.ts):
+- sidebar open/collapsed
+- light/dark theme state
+
+4.4 Component-level split
+- layout/: sidebar, header
+- ui/: reusable primitives (button, input, card, modal, tabs, etc.)
+- chat/: ad preview, poster preview, video preview, voice UI, bubble, typing
+- dashboard/: stats card, activity and chart blocks
+- landing/: hero and animated sections
+
+
+5) AUTHENTICATION AND ACCESS CONTROL
+--------------------------------------------------------------------------------
+5.1 Auth provider setup
+File: src/lib/auth.ts
+- NextAuth configured with:
+  - Google OAuth provider
+  - Credentials provider (email/password)
+- Session strategy: JWT
+- Custom signIn and session callbacks inject DB user id into token/session
+
+5.2 Signup flow
+File: src/app/api/auth/signup/route.ts
+- Validates required fields
+- Sanitizes name input
+- Password length minimum check
+- Bcrypt hash (cost factor 12)
+- Enforces unique email
+- Rate-limited endpoint
+
+5.3 Route protection
+File: src/middleware.ts
+- Dashboard routes protected by auth middleware matcher:
+  - /dashboard/:path*
+- Unauthorized users are blocked from dashboard APIs/pages by session checks.
+
+5.4 Auth UX
+- /login and /signup pages support Google and credentials flow
+- Redirect behavior for authenticated users toward /dashboard
+
+
+6) DATA MODEL (PRISMA) - DETAILED ENTITY BREAKDOWN
+--------------------------------------------------------------------------------
+Datasource:
+- provider: sqlite
+- url: env("DATABASE_URL")
+
+6.1 User
+Fields:
+- id (cuid, PK)
+- name, email(unique), password
+- image (optional)
+- plan (default "free")
+- provider (default "credentials")
+- createdAt, updatedAt
+Relations:
+- campaigns[]
+- ads[]
+- conversations[]
+
+6.2 Campaign
+Fields:
+- id, name
+- status (default "draft")
+- platform, budget
+- startDate/endDate optional
+- userId
+- createdAt/updatedAt
+Relations:
+- user (cascade delete)
+- ads[]
+
+6.3 Ad
+Fields include:
+- core copy fields: headline, primaryText, description, callToAction
+- targeting/style metadata: platform, tone, audience, theme, colorPalette,
+  language
+- distribution flags: favorited, published
+- lifecycle: status, variant
+- media: imageUrl, videoUrl, videoStatus, replicateId
+- tracking metrics: impressions, clicks, likes, shares
+- campaignId (nullable), userId
+- timestamps
+Relations:
+- optional campaign
+- required user
+- feedback[]
+
+6.4 AdFeedback
+Fields:
+- adId
+- comment
+- sentiment, score
+- emotion
+- aspects (JSON stored as string)
+- authorName (optional)
+- createdAt
+
+6.5 Conversation
+Fields:
+- id, title, userId
+- createdAt/updatedAt
+Relations:
+- messages[]
+
+6.6 Message
+Fields:
+- role
+- content
+- adsGenerated (JSON string optional)
+- conversationId
+- createdAt
+
+
+7) API SURFACE - ENDPOINT BY ENDPOINT ANALYSIS
+--------------------------------------------------------------------------------
+7.1 AI conversation and generation
+- POST /api/chat
+  - Validates API key availability
+  - Rate limiting category: chat
+  - Sanitizes user messages for injection/XSS patterns
+  - Sends system + history to GPT model
+  - Parses `json:ads` fenced block if returned
+  - Persists ads + conversation/messages for authenticated users
+
+- POST /api/generate-image
+  - Auth required
+  - Rate limiting category: image
+  - Builds prompt from ad + customization context
+  - Calls image model
+  - Saves base64 output to public/generated-images
+  - Updates ad.imageUrl if adId provided
+
+- POST /api/generate-video
+  - Auth required
+  - Requires OpenAI and Replicate keys
+  - Rate limiting category: video
+  - Generates 4-scene commercial script
+  - Creates scene predictions sequentially with retry/backoff
+  - Initializes job state file in public/generated-videos/jobs/<jobId>
+  - Triggers background TTS generation
+  - Marks ad videoStatus=processing and stores replicateId as jobId
+
+- GET /api/generate-video/status/[jobId]
+  - Auth required
+  - Poll endpoint for multi-stage job
+  - Downloads completed scene clips
+  - On all clip success: merges with FFmpeg pipeline
+  - Handles fallback when FFmpeg unavailable/failure
+  - Updates ad videoUrl and videoStatus
+
+- GET /api/generate-video/[predictionId]
+  - Legacy/simpler prediction status endpoint
+  - Polls one prediction and stores final video
+
+7.2 Voice endpoints
+- POST /api/transcribe
+  - Accepts form-data audio file
+  - Uses whisper transcription
+
+- POST /api/tts
+  - Accepts text JSON
+  - Returns audio/mpeg binary response
+
+7.3 Ads and engagement
+- GET /api/ads
+  - Auth required
+  - Returns user ads with campaign name
+  - Parses hashtags JSON string to array
+
+- POST /api/ads
+  - Auth required
+  - Plan limit check based on user.plan (free vs pro)
+  - Creates ad with required fields
+
+- PATCH/DELETE /api/ads/[id]
+  - Auth + ownership checks
+  - Partial update for multiple ad fields
+  - Delete ad by owner
+
+- POST /api/ads/engagement
+  - Auth required
+  - Validates engagement type: impression/click/like/share
+  - Increments corresponding counters
+
+- GET/POST /api/ads/ab-test
+  - POST creates variant B from AI prompt using an existing ad
+  - GET returns A/B data and computed rates (CTR, engagementRate)
+
+7.4 Campaigns
+- GET/POST /api/campaigns
+  - Auth required
+  - List campaigns with ad counts
+  - Create campaign with plan cap enforcement
+
+- GET/PATCH/DELETE /api/campaigns/[id]
+  - Auth + ownership checks
+  - Full lifecycle operations
+
+7.5 Conversations
+- GET/POST /api/conversations
+  - List user conversations + metadata
+  - Create conversation with optional initial messages
+
+- GET/PATCH/DELETE /api/conversations/[id]
+  - Fetch full conversation + parsed ads per message
+  - Update title/add message
+  - Delete conversation
+
+7.6 Feedback and gallery
+- GET/POST /api/feedback
+  - Auth required for private feedback management
+  - Uses sentiment analysis utility
+  - GET supports ad-specific or aggregate summary mode
+
+- GET /api/gallery
+  - Public endpoint
+  - Returns only published ads with author + recent feedback
+
+- POST /api/gallery/[id]
+  - Public interaction endpoint
+  - Supports action=like and action=feedback
+  - Feedback also runs sentiment pipeline
+
+7.7 User and helper APIs
+- GET/PATCH /api/user
+  - Profile retrieval + profile/password updates
+
+- POST /api/help
+  - Help bot endpoint with dedicated system prompt
+
+- POST /api/translate
+  - Auth required
+  - Supports both field-object translation and plain text translation
+
+- POST /api/poster
+  - Returns AI-generated design spec JSON for poster concepts
+
+- GET /api/auth/[...nextauth]
+  - NextAuth route binding
+
+
+8) CHAT AND VOICE UX WORKFLOW (MINUTE INTERACTION DETAILS)
+--------------------------------------------------------------------------------
+8.1 Chat message lifecycle
+- User enters text (or voice transcript)
+- Message added to local chat store
+- Typing state activated
+- API call to /api/chat with prior history and optional customization
+- Assistant message appended
+- If ad JSON found, ad cards render in response bubble
+- conversationId updated and reused
+
+8.2 Voice mode mechanics
+- MediaRecorder captures audio chunks
+- Web Audio API Analyzer computes RMS in animation loop
+- Silence detection:
+  - marks speech seen when above threshold
+  - auto-stop after timeout once silence persists
+- Blob sent to /api/transcribe
+- On transcript:
+  - invoke chat flow
+  - optional TTS playback
+  - auto-resume listening for conversational loop
+
+8.3 Chat ad card utilities
+- Copy ad text to clipboard
+- Trigger poster generation
+- Trigger video generation pipeline
+- Trigger A/B variant generation
+- Submit direct ad feedback comment
+
+
+9) VIDEO GENERATION PIPELINE - INTERNAL STAGES
+--------------------------------------------------------------------------------
+9.1 Script generation
+- AI builds 4 scenes with:
+  - visual prompt per scene
+  - scene-level voiceover
+  - overlay text + position
+  - overall brand mood + full voiceover script
+
+9.2 Scene rendering
+- Predictions launched sequentially with stagger delay to avoid provider limits
+- Retry logic handles 429-like rate limit errors
+
+9.3 Job state persistence
+- Job metadata in JSON file tracks:
+  - prediction states
+  - user ownership
+  - merge status
+  - final URL
+  - errors
+  - TTS readiness
+
+9.4 Merge phase
+- Download clip outputs
+- Concat clips and normalize dimensions/fps
+- Draw text overlays by scene timing
+- Generate ambient music by mood (or use custom file if present)
+- Mix voice + bgm when available
+- Export final MP4 and expose under public/generated-videos
+
+9.5 Fallback behavior
+- If FFmpeg unavailable or merge fails:
+  - returns first clip as fallback output
+  - still marks generation succeeded with fallback metadata
+
+
+10) SECURITY AND RESILIENCE IMPLEMENTATION
+--------------------------------------------------------------------------------
+10.1 Input sanitation and injection checks
+- Pattern-based prompt injection detection list
+- Basic XSS/script tag pattern checks
+- Sanitizes incoming text by stripping tags and angle brackets
+- Message length cap logic for abuse reduction
+
+10.2 Rate limiting
+- In-memory map-based rate limiter by (type + client identifier)
+- Separate budgets by endpoint type (chat/image/video/signup/etc)
+- Returns Retry-After and rate metadata headers
+- Note: process-memory only (resets on restart, not distributed-safe)
+
+10.3 Auth checks
+- Most data mutation routes require session + ownership validation
+- Gallery read and interaction is intentionally public for published ads
+
+10.4 Error handling style
+- Endpoints generally return JSON errors with meaningful status codes
+- Try/catch blocks in most mutating handlers
+- Frontend uses toasts for user feedback on failures
+
+
+11) ANALYTICS, METRICS, AND INSIGHTS LOGIC
+--------------------------------------------------------------------------------
+11.1 Operational stats endpoint
+- total ads, active campaigns, total campaigns, completed ads
+- six-month monthly ad count generation
+- recent activity feed from recent ads
+
+11.2 Engagement tracking details
+- Tracks impression/click/like/share
+- Impression hook avoids duplicate impression count per session view
+- IntersectionObserver threshold for impression trigger
+
+11.3 Sentiment analytics details
+- AI-first sentiment/emotion/aspect extraction
+- fallback keyword sentiment if AI unavailable
+- Analytics page visualizes:
+  - distribution by platform
+  - sentiment counts
+  - emotion breakdown
+  - engagement totals
+
+
+12) UI/UX NOTES AND MICRO-BEHAVIORS
+--------------------------------------------------------------------------------
+- Sidebar supports mobile overlay and desktop collapse mode
+- Header has theme toggle + user dropdown actions
+- Generate flow supports mode switch: voice mode / type mode
+- Gallery cards support image/video toggle and inline feedback posting
+- Ads page supports tabs:
+  - all, favorites, published, completed, A/B tests
+- Loading states commonly represented with spinning Loader2 icon
+- Empty states are present across major list pages
+
+
+13) CONFIGURATION AND ENVIRONMENT
+--------------------------------------------------------------------------------
+13.1 Scripts
+- npm run dev
+- npm run build
+- npm run start
+- npm run lint
+
+13.2 TypeScript settings highlights
+- strict true
+- noEmit true
+- path alias: @/* -> ./src/*
+
+13.3 Next config
+- experimental serverComponentsExternalPackages includes ffmpeg packages
+
+13.4 Prisma setup
+- SQLite db at file:./dev.db
+- migration folder present with init migration
+- seed script creates demo user (demo@adgen.com)
+
+
+14) KNOWN IMPLEMENTATION CHARACTERISTICS AND LIMITATIONS
+--------------------------------------------------------------------------------
+14.1 Architecture boundaries
+- Single app architecture simplifies development and deployment for small/medium
+  scale usage.
+- API and UI tightly coupled in one codebase.
+
+14.2 Rate limiter scope
+- In-memory limiter does not persist across instances; for multi-instance
+  production a shared store (Redis) would be needed.
+
+14.3 Asset storage model
+- Generated media stored on local filesystem under public/.
+- This is simple for single-instance hosting, but object storage is preferred
+  for robust production scaling.
+
+14.4 A/B logic simplification
+- Variant creation currently generates one alternate variant per request with
+  JSON parse heuristics from model output.
+
+14.5 Miscellaneous technical notes
+- There is both a job-based video status system and a predictionId endpoint,
+  indicating some backward compatibility/transition in video architecture.
+- ui-store default theme is dark while root layout includes className="dark".
+
+
+15) FILES OF HIGHEST IMPORTANCE (QUICK INDEX)
+--------------------------------------------------------------------------------
+Core app:
+- src/app/layout.tsx
+- src/app/page.tsx
+- src/app/globals.css
+- src/app/(dashboard)/layout.tsx
+
+Auth/security:
+- src/lib/auth.ts
+- src/middleware.ts
+- src/app/api/auth/signup/route.ts
+- src/lib/sanitize.ts
+- src/lib/rate-limit.ts
+
+AI generation:
+- src/app/api/chat/route.ts
+- src/app/api/generate-image/route.ts
+- src/app/api/generate-video/route.ts
+- src/app/api/generate-video/status/[jobId]/route.ts
+- src/lib/ffmpeg.ts
+
+Data and analytics:
+- prisma/schema.prisma
+- src/app/api/ads/*.ts
+- src/app/api/campaigns/*.ts
+- src/app/api/stats/route.ts
+- src/app/api/feedback/route.ts
+- src/lib/sentiment.ts
+
+UI flows:
+- src/app/(dashboard)/dashboard/generate/page.tsx
+- src/components/chat/ad-preview-card.tsx
+- src/components/chat/video-preview.tsx
+- src/app/(dashboard)/dashboard/ads/page.tsx
+- src/app/gallery/page.tsx
+
+
+16) SECURITY HYGIENE OBSERVATION
+--------------------------------------------------------------------------------
+A local .env.local file exists and appears to contain real third-party secrets.
+Recommended operational action:
+- Ensure .env.local is ignored and never committed.
+- Rotate exposed provider keys if they were ever shared.
+- Move production secrets to managed secret stores.
+
+(No secret values are reproduced in this document.)
+
+
+17) FINAL CONCLUSION
+--------------------------------------------------------------------------------
+This project is not a prototype-only skeleton; it is a feature-rich integrated
+application with:
+- End-to-end AI creation (copy + image + video)
+- Authenticated multi-page dashboard
+- Data persistence and management domain entities
+- Public gallery and social-style feedback loops
+- Security controls (rate limits + sanitization)
+- Visualization and operational analytics
+
+In practical terms, AdGen is a complete AI-assisted ad operations platform with
+strong breadth across creation, management, optimization, and publishing.
+
+================================================================================
+END OF REPORT
+================================================================================

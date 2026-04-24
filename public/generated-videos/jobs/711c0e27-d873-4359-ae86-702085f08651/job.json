@@ -1,0 +1,77 @@
+{
+  "jobId": "711c0e27-d873-4359-ae86-702085f08651",
+  "status": "succeeded",
+  "createdAt": 1774679698760,
+  "adId": "cmn9yf2zv0016tb6kcoj0m9tw",
+  "userId": "cmmfjwfnm0000103g75r5djr8",
+  "script": {
+    "brand_mood": "elegant",
+    "visual_style": "A modern, premium aesthetic with vibrant colors and high contrast, emphasizing sleek lines and sophisticated textures.",
+    "full_voiceover": "In a world full of demands, we all need a reliable partner to help us navigate life’s challenges. Whether it’s managing work or nurturing personal connections, your new assistant is here to support you. Introducing the Apple Phone, crafted for seamless coordination between your professional and personal life. Embrace the balance and let your aspirations soar with confidence. Discover how this tool can transform your daily routine and enhance your life. Learn more today.",
+    "scenes": [
+      {
+        "scene": 1,
+        "name": "Hook",
+        "visual_prompt": "A beautifully lit, modern workspace at dawn. A silhouetted figure enters the frame, their hands moving gracefully to arrange a workspace. Sunlight streams through large windows, casting soft glows on polished surfaces. The camera slowly dolly-in, capturing the serene atmosphere and the promise of a new day.",
+        "voiceover": "In a world full of demands, we all need a reliable partner to help us navigate life’s challenges.",
+        "overlay_text": "",
+        "overlay_position": "top"
+      },
+      {
+        "scene": 2,
+        "name": "Story",
+        "visual_prompt": "A close-up of a hand scrolling through a vibrant digital calendar on a smartphone. Out-of-focus backgrounds show the bustle of life with people moving, laughter, and everyday chaos. The camera pans around the hand, emphasizing the urgency and desire to maintain balance in work and personal life.",
+        "voiceover": "Whether it’s managing work or nurturing personal connections, your new assistant is here to support you.",
+        "overlay_text": "",
+        "overlay_position": "bottom"
+      },
+      {
+        "scene": 3,
+        "name": "Product Reveal",
+        "visual_prompt": "A striking, slow-motion shot of the Apple Phone resting elegantly on a sleek surface. The camera glides around the device, showcasing its premium finish and vibrant screen lighting up with notifications. Reflections capture the phone’s modern design, evoking a sense of sophistication and efficiency.",
+        "voiceover": "Introducing the Apple Phone, crafted for seamless coordination between your professional and personal life.",
+        "overlay_text": "Your New Assistant",
+        "overlay_position": "bottom"
+      },
+      {
+        "scene": 4,
+        "name": "Emotional Close",
+        "visual_prompt": "A joyful moment where a silhouetted figure confidently walks out of the workspace, phone in hand, illuminated by golden hour light. They smile as they connect with loved ones through the device. The camera slowly pulls back, revealing a warm environment filled with laughter and connection.",
+        "voiceover": "Embrace the balance and let your aspirations soar with confidence. Discover how this tool can transform your daily routine and enhance your life.",
+        "overlay_text": "Learn More",
+        "overlay_position": "center"
+      }
+    ]
+  },
+  "predictions": [
+    {
+      "id": "4kk50scwm9rmw0cx6ckbv2qshm",
+      "sceneIndex": 0,
+      "status": "succeeded",
+      "clipPath": "C:\\Users\\garvi\\OneDrive\\Desktop\\AdGen\\frontend\\public\\generated-videos\\jobs\\711c0e27-d873-4359-ae86-702085f08651\\clip-0.mp4"
+    },
+    {
+      "id": "z97rvnpg1drmr0cx6ckaesqv0c",
+      "sceneIndex": 1,
+      "status": "succeeded",
+      "clipPath": "C:\\Users\\garvi\\OneDrive\\Desktop\\AdGen\\frontend\\public\\generated-videos\\jobs\\711c0e27-d873-4359-ae86-702085f08651\\clip-1.mp4"
+    },
+    {
+      "id": "4s6g9d01mnrmy0cx6ckr12gr5r",
+      "sceneIndex": 2,
+      "status": "succeeded",
+      "clipPath": "C:\\Users\\garvi\\OneDrive\\Desktop\\AdGen\\frontend\\public\\generated-videos\\jobs\\711c0e27-d873-4359-ae86-702085f08651\\clip-2.mp4"
+    },
+    {
+      "id": "fz7x78smb5rmw0cx6cks2sxtx8",
+      "sceneIndex": 3,
+      "status": "succeeded",
+      "clipPath": "C:\\Users\\garvi\\OneDrive\\Desktop\\AdGen\\frontend\\public\\generated-videos\\jobs\\711c0e27-d873-4359-ae86-702085f08651\\clip-3.mp4"
+    }
+  ],
+  "ttsReady": false,
+  "voiceoverPath": "C:\\Users\\garvi\\OneDrive\\Desktop\\AdGen\\frontend\\public\\generated-videos\\jobs\\711c0e27-d873-4359-ae86-702085f08651\\voiceover.mp3",
+  "mergeStarted": true,
+  "finalVideoUrl": "/generated-videos/commercial-1774679850849-711c0e27.mp4",
+  "error": null
+}

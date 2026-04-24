@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String   @default("")
+  image     String?
+  plan      String   @default("free")
+  provider  String   @default("credentials")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  campaigns    Campaign[]
+  ads          Ad[]
+  conversations Conversation[]
+}
+
+model Campaign {
+  id        String   @id @default(cuid())
+  name      String
+  status    String   @default("draft")
+  platform  String
+  budget    Float    @default(0)
+  startDate DateTime?
+  endDate   DateTime?
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ads  Ad[]
+}
+
+model Ad {
+  id          String   @id @default(cuid())
+  headline    String
+  primaryText String
+  description String
+  callToAction String
+  platform    String
+  hashtags    String   @default("[]")
+  status      String   @default("completed")
+  tone        String?
+  audience    String?
+  theme       String?
+  colorPalette String?
+  language    String   @default("en")
+  imageUrl    String?
+  videoUrl    String?
+  videoStatus String?
+  replicateId String?
+  favorited   Boolean  @default(false)
+  published   Boolean  @default(false)
+  variant     String?
+  campaignId  String?
+  userId      String
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  likes       Int      @default(0)
+  shares      Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  campaign Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feedback AdFeedback[]
+}
+
+model AdFeedback {
+  id         String   @id @default(cuid())
+  adId       String
+  comment    String
+  sentiment  String?
+  score      Float?
+  emotion    String?
+  aspects    String?
+  authorName String?
+  createdAt  DateTime @default(now())
+
+  ad Ad @relation(fields: [adId], references: [id], onDelete: Cascade)
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  title     String   @default("New Conversation")
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages Message[]
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  role           String
+  content        String
+  adsGenerated   String?
+  conversationId String
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}

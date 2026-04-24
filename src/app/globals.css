@@ -2,26 +2,164 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 0 0% 97%;
+    --foreground: 0 0% 8%;
+    --card: 0 0% 99%;
+    --card-foreground: 0 0% 8%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 97%;
+    --secondary: 0 0% 93%;
+    --secondary-foreground: 0 0% 18%;
+    --muted: 0 0% 92%;
+    --muted-foreground: 0 0% 35%;
+    --accent: 0 0% 92%;
+    --accent-foreground: 0 0% 10%;
+    --destructive: 0 72% 42%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 84%;
+    --input: 0 0% 84%;
+    --ring: 0 0% 10%;
+    --radius: 0.85rem;
+    --sidebar: 0 0% 96%;
+    --sidebar-foreground: 0 0% 10%;
+    --sidebar-border: 0 0% 84%;
+    --sidebar-accent: 0 0% 90%;
+  }
+
+  .dark {
+    --background: 0 0% 3%;
+    --foreground: 0 0% 96%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 96%;
+    --primary: 0 0% 96%;
+    --primary-foreground: 0 0% 7%;
+    --secondary: 0 0% 11%;
+    --secondary-foreground: 0 0% 90%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 67%;
+    --accent: 0 0% 12%;
+    --accent-foreground: 0 0% 95%;
+    --destructive: 0 64% 39%;
+    --destructive-foreground: 0 0% 95%;
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 0 0% 92%;
+    --sidebar: 0 0% 5%;
+    --sidebar-foreground: 0 0% 94%;
+    --sidebar-border: 0 0% 14%;
+    --sidebar-accent: 0 0% 10%;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    background-image:
+      radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.09), transparent 36%),
+      radial-gradient(circle at 82% 0%, rgba(255, 255, 255, 0.06), transparent 30%),
+      linear-gradient(160deg, rgba(255, 255, 255, 0.03), transparent 60%);
+    min-height: 100vh;
+  }
 }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  .glass {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+    backdrop-filter: blur(18px) saturate(130%);
+    -webkit-backdrop-filter: blur(18px) saturate(130%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow:
+      0 12px 40px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  }
+
+  :root .glass {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(242, 242, 242, 0.8));
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow:
+      0 12px 35px rgba(0, 0, 0, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  }
+
+  .mono-border {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .glow-hover {
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+  }
+  .glow-hover:hover {
+    box-shadow:
+      0 18px 50px rgba(0, 0, 0, 0.5),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+    transform: translateY(-2px);
+  }
+
+  .headline-metal {
+    color: transparent;
+    background-image: linear-gradient(100deg, #ffffff 0%, #d9d9d9 32%, #8d8d8d 52%, #f7f7f7 67%, #b8b8b8 100%);
+    background-size: 220% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: sheen 6s linear infinite;
+  }
+
+  .hero-grid {
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(circle at center, black 45%, transparent 88%);
+  }
+
+  .stagger-in {
+    opacity: 0;
+    transform: translateY(18px);
+    animation: rise 0.85s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  }
+
+  .ink-orb {
+    border-radius: 9999px;
+    filter: blur(80px);
+    opacity: 0.2;
+    animation: drift 9s ease-in-out infinite;
+  }
+}
+
+@keyframes sheen {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 220% 50%;
+  }
+}
+
+@keyframes rise {
+  0% {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(22px, -14px) scale(1.08);
   }
 }

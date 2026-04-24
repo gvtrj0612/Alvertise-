@@ -1,0 +1,80 @@
+{
+  "jobId": "60179875-e358-4685-aac1-a15558cb45ed",
+  "status": "succeeded",
+  "createdAt": 1777057484871,
+  "adId": "cmoda1uwb000nabez9v2gi45t",
+  "userId": "cmmfjwfnm0000103g75r5djr8",
+  "language": "hi",
+  "script": {
+    "brand_mood": "energetic",
+    "visual_style": "A vibrant, modern cinematic journey, filled with dynamic movements and high-contrast colors that evoke a sense of vitality and inspiration.",
+    "full_voiceover": "हर कदम पर कितना आराम महसूस होता है, यह आपको उस जीत के करीब ले जाता है, जिसके लिए आपने कड़ी मेहनत की है। यह सिर्फ दौड़ना नहीं है, यह एक नया अनुभव है। चलिए, अपनी दौड़ को नई ऊँचाइयों पर ले चलते हैं। जीतने के लिए तैयार हो जाइए।",
+    "scenes": [
+      {
+        "scene": 1,
+        "name": "हुक",
+        "visual_prompt": "सूरज का हल्का प्रकाश पेड़ की पत्तियों के बीच से छिटकता है। एक सिल्हूट हंसते हुए, दौड़ने की तैयारी करते हुए, जूते को टाई कर रहा है। पृष्ठभूमि में, चिरपिंग बर्ड्स की ध्वनि। एक दोस्ताना, ऊर्जावान माहौल का एहसास।",
+        "voiceover": "हर कदम पर कितना आराम महसूस होता है, यह आपको उस जीत के करीब ले जाता है।",
+        "overlay_text": "",
+        "overlay_position": "top"
+      },
+      {
+        "scene": 2,
+        "name": "कहानी",
+        "visual_prompt": "एक व्यक्ति पार्क में दौड़ने की कोशिश करता है। वह असहज लग रहा है, उसके जूते से परेशानी हो रही है। मिट्टी की गंध और ताजगी का एहसास। उसकी आंखों में लक्ष्य की चमक है, लेकिन उसे सूझ नहीं रहा है।",
+        "voiceover": "यह सिर्फ दौड़ना नहीं है, यह एक नया अनुभव है।",
+        "overlay_text": "",
+        "overlay_position": "bottom"
+      },
+      {
+        "scene": 3,
+        "name": "उत्पाद प्रकट करना",
+        "visual_prompt": "कैमरा धीरे-धीरे जूते की तरफ ज़ूम करता है। जूते की चमक, तेजी से चलने वाले पैरों के साथ, रंगीन और प्रीमियम दिखते हैं। बढ़िया टेक्सचर और आरामदायक फिटर को दिखाने के लिए एक मैक्रो शॉट।",
+        "voiceover": "यह सिर्फ आराम नहीं है, यह आपको उस जीत के करीब ले जाता है।",
+        "overlay_text": "",
+        "overlay_position": "bottom"
+      },
+      {
+        "scene": 4,
+        "name": "भावनात्मक क्लोज",
+        "visual_prompt": "एक व्यक्ति अपने नए जूतों में दौड़ता हुआ, खुशी से हंसते हुए, सूरज के प्रकाश में चमकता हुआ। उसकी गति में आत्मविश्वास और ऊर्जा। पीछे पार्क में दोस्त और साथी उसे खुशी से देख रहे हैं।",
+        "voiceover": "चलिए, अपनी दौड़ को नई ऊँचाइयों पर ले चलते हैं। जीतने के लिए तैयार हो जाइए।",
+        "overlay_text": "",
+        "overlay_position": "center"
+      }
+    ]
+  },
+  "optimizationProfile": "quality",
+  "overlayStyle": "cinematic-lower-third",
+  "predictions": [
+    {
+      "id": "y524ey54bsrmw0cxr3g8cg4dmw",
+      "sceneIndex": 0,
+      "status": "succeeded",
+      "clipPath": "C:\\Users\\garvi\\OneDrive\\Desktop\\AdGen\\frontend\\public\\generated-videos\\jobs\\60179875-e358-4685-aac1-a15558cb45ed\\clip-0.mp4"
+    },
+    {
+      "id": "h2xa88ez1hrmt0cxr3g9ww6e8m",
+      "sceneIndex": 1,
+      "status": "succeeded",
+      "clipPath": "C:\\Users\\garvi\\OneDrive\\Desktop\\AdGen\\frontend\\public\\generated-videos\\jobs\\60179875-e358-4685-aac1-a15558cb45ed\\clip-1.mp4"
+    },
+    {
+      "id": "bddefwgq8hrmy0cxr3gr4ns8tc",
+      "sceneIndex": 2,
+      "status": "succeeded",
+      "clipPath": "C:\\Users\\garvi\\OneDrive\\Desktop\\AdGen\\frontend\\public\\generated-videos\\jobs\\60179875-e358-4685-aac1-a15558cb45ed\\clip-2.mp4"
+    },
+    {
+      "id": "y1zeyhjfgdrmw0cxr3gtqjn08r",
+      "sceneIndex": 3,
+      "status": "succeeded",
+      "clipPath": "C:\\Users\\garvi\\OneDrive\\Desktop\\AdGen\\frontend\\public\\generated-videos\\jobs\\60179875-e358-4685-aac1-a15558cb45ed\\clip-3.mp4"
+    }
+  ],
+  "ttsReady": false,
+  "voiceoverPath": "C:\\Users\\garvi\\OneDrive\\Desktop\\AdGen\\frontend\\public\\generated-videos\\jobs\\60179875-e358-4685-aac1-a15558cb45ed\\voiceover.mp3",
+  "mergeStarted": true,
+  "finalVideoUrl": "/generated-videos/commercial-1777057622283-60179875.mp4",
+  "error": null
+}

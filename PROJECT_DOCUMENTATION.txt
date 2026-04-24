@@ -1,0 +1,1055 @@
+================================================================================
+                        ADGEN - AI AD GENERATION PLATFORM
+                         Complete Project Documentation
+================================================================================
+
+================================================================================
+1. PROJECT OVERVIEW
+================================================================================
+
+AdGen is a full-stack AI-powered advertisement generation platform built with
+Next.js 14. It enables users to create high-converting ad copy, poster images,
+and promotional videos through a conversational AI interface with voice
+interaction support. The system leverages multiple AI models (OpenAI GPT-4o-mini,
+DALL-E 3, Whisper, TTS-1, and Replicate Stable Video Diffusion) to deliver an
+end-to-end ad creation workflow.
+
+The platform supports multi-language ad generation (English, Hindi, Kannada,
+Spanish, French), multiple advertising platforms (Facebook, Instagram, Google
+Ads, LinkedIn, Twitter/X), and includes built-in security features like prompt
+injection detection, XSS protection, and IP-based rate limiting.
+
+
+================================================================================
+2. UNIQUE SELLING PROPOSITIONS (USP)
+================================================================================
+
+1. CONVERSATIONAL AD CREATION
+   - Unlike form-based ad tools, AdGen uses a natural chat interface powered by
+     GPT-4o-mini. Users describe their product or service in conversation, and
+     the AI asks follow-up questions one at a time to gather context before
+     generating ads. This makes ad creation feel intuitive and accessible.
+
+2. VOICE-FIRST INTERACTION
+   - Full voice workflow: speak your ad brief via microphone (transcribed by
+     Whisper), get AI responses read aloud via TTS-1. Includes automatic silence
+     detection using Web Audio API AnalyserNode for hands-free operation.
+
+3. COMPLETE AD PIPELINE (Text -> Image -> Video)
+   - Generate ad copy, then create a poster image with DALL-E 3, then animate
+     it into a short video with Stable Video Diffusion - all from a single
+     conversation. No need to switch between different tools.
+
+4. MULTI-LANGUAGE SUPPORT
+   - Generate ads in 5 languages: English, Hindi, Kannada, Spanish, French.
+     The AI adapts cultural nuances for each language.
+
+5. PLATFORM-SPECIFIC OPTIMIZATION
+   - Ads are tailored to each platform's character limits and best practices:
+     Facebook (headline <= 40 chars), Google Ads (headline <= 30 chars),
+     Instagram (hashtag-heavy, emoji-friendly), LinkedIn (professional tone),
+     Twitter/X (concise, <= 280 chars).
+
+6. PROFESSIONAL COPYWRITING FRAMEWORKS
+   - Uses industry-standard frameworks: AIDA (Attention-Interest-Desire-Action),
+     PAS (Problem-Agitate-Solution), BAB (Before-After-Bridge), 4U (Useful,
+     Urgent, Unique, Ultra-specific). Each generation produces 3 variations
+     using different frameworks.
+
+7. BUILT-IN SECURITY
+   - Prompt injection detection (16 regex patterns), XSS protection (6 HTML/
+     script patterns), input sanitization, message length limits, and IP-based
+     rate limiting on all endpoints.
+
+
+================================================================================
+3. FEATURES - DETAILED BREAKDOWN
+================================================================================
+
+------------------------------------------------------------------------------
+3.1 CHAT-BASED AD GENERATION
+------------------------------------------------------------------------------
+Technology: OpenAI GPT-4o-mini
+Route:      /api/chat (POST)
+Component:  src/components/chat/chat-window.tsx
+Store:      src/store/chat-store.ts (Zustand)
+
+How it works:
+- User sends a message describing their product/service
+- The AI asks follow-up questions (one at a time) to gather:
+  * Product/service name and description
+  * Target audience (demographics, psychographics, pain points)
+  * Advertising platform
+  * Desired tone
+  * Key selling points / USP
+  * Call-to-action
+  * Budget context / promotional offers
+- Once enough context is gathered, the AI generates 3 ad variations
+- Each variation uses a different copywriting framework (AIDA, PAS, BAB)
+- Ads are returned as structured JSON within the response
+- Ads are automatically saved to the SQLite database via Prisma
+
+Parameters:
+  Model:       gpt-4o-mini
+  Temperature: 0.7
+  Max Tokens:  1500
+
+Output format:
+  Each ad contains: headline, primaryText, description, callToAction,
+  platform, hashtags[]
+
+------------------------------------------------------------------------------
+3.2 VOICE INTERACTION (Speech-to-Text + Text-to-Speech)
+------------------------------------------------------------------------------
+Technologies: OpenAI Whisper (STT), OpenAI TTS-1 (TTS), Web Audio API
+
+Speech-to-Text:
+  Route:     /api/transcribe (POST)
+  Model:     whisper-1
+  Format:    Accepts audio File via FormData
+  Hook:      src/hooks/use-voice-recorder.ts
+
+  How it works:
+  - User clicks mic button to start recording
+  - MediaRecorder captures audio from getUserMedia()
+  - Web Audio API AnalyserNode monitors audio levels in real-time
+  - Automatic silence detection: if audio RMS drops below threshold (0.01)
+    for 2 seconds, recording stops automatically
+  - Audio blob sent to /api/transcribe, which forwards to Whisper
+  - Transcribed text is injected into the chat input
+
+Text-to-Speech:
+  Route:     /api/tts (POST)
+  Model:     tts-1
+  Voice:     nova
+  Hook:      src/hooks/use-audio-player.ts
+
+  How it works:
+  - After AI generates a response, the text content is sent to /api/tts
+  - TTS-1 returns an audio/mpeg buffer
+  - Frontend creates an AudioContext, decodes the buffer, and plays it
+  - Audio state is tracked in the Zustand store (isPlaying, audioRef)
+
+------------------------------------------------------------------------------
+3.3 AI POSTER IMAGE GENERATION
+------------------------------------------------------------------------------
+Technology: OpenAI DALL-E 3
+Route:      /api/generate-image (POST)
+Component:  src/components/chat/ad-preview-card.tsx
+
+How it works:
+- Each generated ad card has a "Generate Poster" button
+- When clicked, the ad's headline, primary text, CTA, platform, theme,
+  colors, audience, and language are sent to /api/generate-image
+- The API constructs a detailed DALL-E 3 prompt incorporating all parameters
+- DALL-E 3 generates a 1024x1024 image in b64_json format
+- The image is saved locally to /public/generated-images/ directory
+- The image URL is stored in the Ad record in the database
+- The poster is displayed in the ad preview card
+
+Parameters:
+  Model:           dall-e-3
+  Size:            1024x1024
+  Response Format: b64_json
+  N:               1
+
+------------------------------------------------------------------------------
+3.4 AI VIDEO GENERATION
+------------------------------------------------------------------------------
+Technology: Replicate (Stable Video Diffusion)
+Routes:     /api/generate-video (POST), /api/generate-video/[predictionId] (GET)
+Component:  src/components/chat/video-preview.tsx
+
+How it works:
+- Step 1: If no source image exists, generate one via DALL-E 3
+- Step 2: Convert image to base64 data URI
+- Step 3: Send to Replicate's Stable Video Diffusion model
+  * Model version: d68b16aea809e0dda306862ab5e22e6eb5809e466b66c76a1a9e5a0e3e5b7fb3
+  * Parameters: motion_bucket_id=127, fps=7, cond_aug=0.02
+- Step 4: Replicate returns a prediction ID (video renders asynchronously)
+- Step 5: Frontend polls /api/generate-video/[predictionId] every 5 seconds
+- Step 6: When status = "succeeded", the video URL is returned
+- Step 7: Video is downloaded and saved locally to /public/generated-videos/
+- Step 8: Ad record updated with videoUrl and videoStatus in database
+
+Video Preview Component (video-preview.tsx):
+- Shows step-by-step progress indicators:
+  1. Generate Image (DALL-E 3)
+  2. Render Video (Replicate SVD)
+  3. Download & Save
+- Progress bar with percentage
+- Source image preview during rendering
+- Auto-plays video on completion
+- Error state with retry button
+- Maximum 60 polls (5 minutes timeout)
+
+------------------------------------------------------------------------------
+3.5 CUSTOMIZATION PANEL
+------------------------------------------------------------------------------
+Component: src/components/chat/customization-panel.tsx
+
+Allows users to configure ad generation parameters:
+- Theme:         modern, playful, luxury, minimal, bold, retro, elegant, tech
+- Target Audience: general, millennials, gen-z, professionals, parents, seniors
+- Platform:      facebook, instagram, google, twitter, linkedin
+- Tone:          casual, professional, urgent, playful, luxury, bold, empathetic
+- Color Palette: vibrant, pastel, monochrome, dark, earth, neon, corporate
+- Call to Action: custom text input
+- Language:      English (en), Hindi (hi), Kannada (kn), Spanish (es), French (fr)
+
+These values are sent along with chat messages and injected into the AI system
+prompt to customize the generated ad output.
+
+------------------------------------------------------------------------------
+3.6 AUTHENTICATION SYSTEM
+------------------------------------------------------------------------------
+Technology: NextAuth.js v5 (beta)
+Config:     src/lib/auth.ts
+
+Providers:
+1. Credentials (email + password)
+   - Passwords hashed with bcryptjs
+   - User lookup via Prisma
+
+2. Google OAuth
+   - Uses GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET
+   - Auto-creates user record on first sign-in
+
+Session Strategy: JWT (JSON Web Tokens)
+Pages:
+  - /login  (sign in)
+  - /signup (register)
+
+Middleware: src/middleware.ts
+  - Protects all /dashboard/* routes
+  - Redirects unauthenticated users to /login
+
+------------------------------------------------------------------------------
+3.7 DASHBOARD & ADS MANAGEMENT
+------------------------------------------------------------------------------
+Pages:
+  - /dashboard           - Main dashboard with stats overview
+  - /dashboard/ads       - Grid view of all generated ads
+  - /dashboard/campaigns - Campaign management
+  - /dashboard/analytics - Charts and performance metrics (Recharts)
+  - /dashboard/settings  - User settings
+
+Ads Page Features:
+  - Grid layout of all saved ads
+  - Each card shows: headline, primary text, platform badge, CTA button
+  - Poster image display with video play button overlay
+  - Inline video playback (click play to watch, click again to go back)
+  - Filter and sort capabilities
+
+------------------------------------------------------------------------------
+3.8 CONVERSATION HISTORY
+------------------------------------------------------------------------------
+- All chat conversations are automatically persisted to the database
+- Each conversation has a title (first user message, truncated to 100 chars)
+- Messages are stored with role, content, and optional adsGenerated JSON
+- Users can revisit previous conversations from the sidebar
+- Conversation ID is tracked across the session for continuity
+
+------------------------------------------------------------------------------
+3.9 LANDING PAGE
+------------------------------------------------------------------------------
+Route:     / (root)
+Component: src/app/page.tsx
+
+Features:
+- Hero section with tagline and CTA buttons
+- 6 Feature cards with Lucide icons:
+  * AI Ad Copy (Sparkles icon)
+  * Voice Input (Mic icon)
+  * AI Posters (Image icon)
+  * Video Ads (Video icon)
+  * 5 Languages (Languages icon)
+  * Analytics (BarChart3 icon)
+- 3-step "How It Works" section
+- Platform badges (Facebook, Instagram, Google, LinkedIn, Twitter)
+- Footer with CTA
+- Fully responsive, no client-side JavaScript needed (Server Component)
+
+
+================================================================================
+4. TECHNICAL ARCHITECTURE
+================================================================================
+
+------------------------------------------------------------------------------
+4.1 TECH STACK
+------------------------------------------------------------------------------
+
+Frontend:
+  - Next.js 14.2.35      (App Router, Server/Client Components)
+  - React 18             (UI library)
+  - TypeScript 5         (Type safety)
+  - Tailwind CSS 3.4     (Utility-first styling)
+  - Zustand 5.0          (State management)
+  - Framer Motion 12     (Animations)
+  - Lucide React 0.575   (Icon library)
+  - Recharts 3.7         (Charts for analytics)
+  - React Markdown 10    (Markdown rendering in chat)
+  - React Hot Toast 2.6  (Toast notifications)
+  - class-variance-authority 0.7 (Component variants)
+  - clsx 2.1 + tailwind-merge 3.5 (Class name utilities)
+  - date-fns 4.1         (Date formatting)
+  - Axios 1.13           (HTTP client)
+
+Backend (Next.js API Routes):
+  - Next.js 14 API Routes (Route Handlers)
+  - Prisma 5.22          (ORM for SQLite)
+  - NextAuth v5 beta 30  (Authentication)
+  - bcryptjs 3.0         (Password hashing)
+  - OpenAI SDK 6.27      (GPT-4o-mini, DALL-E 3, Whisper, TTS-1)
+  - Replicate SDK 1.4    (Stable Video Diffusion)
+
+Database:
+  - SQLite               (via Prisma, file-based, zero-config)
+
+DevDependencies:
+  - ESLint 8 + eslint-config-next
+  - PostCSS 8
+  - TypeScript type definitions (@types/node, @types/react, @types/bcryptjs)
+
+------------------------------------------------------------------------------
+4.2 PROJECT STRUCTURE
+------------------------------------------------------------------------------
+
+frontend/
+  prisma/
+    schema.prisma              # Database schema (6 models)
+    dev.db                     # SQLite database file
+  public/
+    generated-images/          # DALL-E 3 generated poster images
+    generated-videos/          # Stable Video Diffusion output videos
+  src/
+    app/
+      page.tsx                 # Landing page (marketing page)
+      layout.tsx               # Root layout
+      globals.css              # Global styles + Tailwind
+      (auth)/
+        login/page.tsx         # Sign in page
+        signup/page.tsx        # Registration page
+      (dashboard)/
+        dashboard/
+          page.tsx             # Main dashboard
+          layout.tsx           # Dashboard layout with sidebar
+          ads/page.tsx         # Ads grid view
+          campaigns/page.tsx   # Campaign management
+          analytics/page.tsx   # Analytics charts
+          settings/page.tsx    # User settings
+      api/
+        auth/[...nextauth]/    # NextAuth route handler
+        chat/route.ts          # AI chat endpoint (GPT-4o-mini)
+        generate-image/route.ts        # Poster generation (DALL-E 3)
+        generate-video/route.ts        # Video initiation (Replicate)
+        generate-video/[predictionId]/ # Video status polling
+        tts/route.ts           # Text-to-Speech (TTS-1)
+        transcribe/route.ts    # Speech-to-Text (Whisper)
+        conversations/route.ts # Conversation CRUD
+        conversations/[id]/    # Single conversation
+        ads/route.ts           # Ads CRUD
+        ads/[id]/route.ts      # Single ad operations
+        ads/[id]/feedback/     # Ad feedback
+        campaigns/route.ts     # Campaign CRUD
+        campaigns/[id]/        # Single campaign
+        analytics/route.ts     # Analytics data
+        user/route.ts          # User profile
+        signup/route.ts        # User registration
+    components/
+      chat/
+        chat-window.tsx        # Main chat interface
+        message-bubble.tsx     # Individual message display
+        ad-preview-card.tsx    # Generated ad card with actions
+        video-preview.tsx      # Video generation UI with progress
+        customization-panel.tsx # Ad customization sidebar
+        voice-button.tsx       # Microphone toggle button
+      dashboard/
+        sidebar.tsx            # Navigation sidebar
+        stats-cards.tsx        # Dashboard statistics
+        recent-ads.tsx         # Recent ads list
+      ui/
+        button.tsx             # Reusable button component
+        input.tsx              # Reusable input component
+        card.tsx               # Reusable card component
+    hooks/
+      use-voice-recorder.ts   # MediaRecorder + silence detection
+      use-audio-player.ts     # TTS audio playback
+    store/
+      chat-store.ts           # Zustand: messages, ads, voice state
+      ui-store.ts             # Zustand: sidebar, theme
+    lib/
+      auth.ts                 # NextAuth configuration
+      prisma.ts               # Prisma client singleton
+      rate-limit.ts           # IP-based rate limiting
+      sanitize.ts             # Input sanitization & injection detection
+      utils.ts                # cn() class name utility
+    middleware.ts              # Auth middleware for route protection
+    types/
+      index.ts                # Shared TypeScript interfaces
+
+
+================================================================================
+5. DATABASE MODELS (Prisma/SQLite)
+================================================================================
+
+------------------------------------------------------------------------------
+5.1 USER
+------------------------------------------------------------------------------
+  id        String   (CUID, primary key)
+  name      String
+  email     String   (unique)
+  password  String   (bcrypt hash, default "")
+  image     String?  (profile picture URL)
+  plan      String   (default "free")
+  provider  String   (default "credentials", or "google")
+  createdAt DateTime
+  updatedAt DateTime
+
+  Relations: has many Campaign[], Ad[], Conversation[]
+
+------------------------------------------------------------------------------
+5.2 CAMPAIGN
+------------------------------------------------------------------------------
+  id        String   (CUID)
+  name      String
+  status    String   (default "draft")
+  platform  String
+  budget    Float    (default 0)
+  startDate DateTime?
+  endDate   DateTime?
+  userId    String   (FK -> User)
+  createdAt DateTime
+  updatedAt DateTime
+
+  Relations: belongs to User, has many Ad[]
+
+------------------------------------------------------------------------------
+5.3 AD
+------------------------------------------------------------------------------
+  id           String   (CUID)
+  headline     String
+  primaryText  String
+  description  String
+  callToAction String
+  platform     String
+  hashtags     String   (JSON array as string, default "[]")
+  status       String   (default "completed")
+  tone         String?
+  audience     String?
+  theme        String?
+  colorPalette String?
+  language     String   (default "en")
+  imageUrl     String?  (path to generated poster)
+  videoUrl     String?  (path to generated video)
+  videoStatus  String?  ("processing", "succeeded", "failed")
+  replicateId  String?  (Replicate prediction ID)
+  variant      String?
+  campaignId   String?  (FK -> Campaign, optional)
+  userId       String   (FK -> User)
+  impressions  Int      (default 0)
+  clicks       Int      (default 0)
+  likes        Int      (default 0)
+  shares       Int      (default 0)
+  createdAt    DateTime
+  updatedAt    DateTime
+
+  Relations: belongs to User, belongs to Campaign?, has many AdFeedback[]
+
+------------------------------------------------------------------------------
+5.4 AD FEEDBACK
+------------------------------------------------------------------------------
+  id        String   (CUID)
+  adId      String   (FK -> Ad)
+  comment   String
+  sentiment String?
+  score     Float?
+  createdAt DateTime
+
+  Relations: belongs to Ad
+
+------------------------------------------------------------------------------
+5.5 CONVERSATION
+------------------------------------------------------------------------------
+  id        String   (CUID)
+  title     String   (default "New Conversation")
+  userId    String   (FK -> User)
+  createdAt DateTime
+  updatedAt DateTime
+
+  Relations: belongs to User, has many Message[]
+
+------------------------------------------------------------------------------
+5.6 MESSAGE
+------------------------------------------------------------------------------
+  id             String   (CUID)
+  role           String   ("user" or "assistant")
+  content        String
+  adsGenerated   String?  (JSON array of generated ads, if any)
+  conversationId String   (FK -> Conversation)
+  createdAt      DateTime
+
+  Relations: belongs to Conversation
+
+
+================================================================================
+6. AI MODELS - DETAILS & PRICING
+================================================================================
+
+------------------------------------------------------------------------------
+6.1 GPT-4o-mini (Chat / Ad Copy Generation)
+------------------------------------------------------------------------------
+  Provider:     OpenAI
+  Model ID:     gpt-4o-mini
+  Purpose:      Ad copy generation, conversational AI
+  Temperature:  0.7
+  Max Tokens:   1500
+  Pricing:      $0.15 / 1M input tokens, $0.60 / 1M output tokens
+  Cost per ad:  ~$0.001 - $0.003 per generation (3 variations)
+
+------------------------------------------------------------------------------
+6.2 DALL-E 3 (Poster Image Generation)
+------------------------------------------------------------------------------
+  Provider:     OpenAI
+  Model ID:     dall-e-3
+  Purpose:      Advertisement poster/banner image generation
+  Size:         1024x1024
+  Format:       b64_json (base64 encoded)
+  Images per request: 1
+  Pricing:      $0.040 per image (1024x1024)
+
+------------------------------------------------------------------------------
+6.3 Whisper (Speech-to-Text)
+------------------------------------------------------------------------------
+  Provider:     OpenAI
+  Model ID:     whisper-1
+  Purpose:      Voice input transcription
+  Format:       text (plain text output)
+  Pricing:      $0.006 per minute of audio
+
+------------------------------------------------------------------------------
+6.4 TTS-1 (Text-to-Speech)
+------------------------------------------------------------------------------
+  Provider:     OpenAI
+  Model ID:     tts-1
+  Voice:        nova
+  Purpose:      Reading AI responses aloud
+  Output:       audio/mpeg buffer
+  Pricing:      $15.00 per 1M characters
+
+------------------------------------------------------------------------------
+6.5 Stable Video Diffusion (Image-to-Video)
+------------------------------------------------------------------------------
+  Provider:     Replicate
+  Model Version: d68b16aea809e0dda306862ab5e22e6eb5809e466b66c76a1a9e5a0e3e5b7fb3
+  Purpose:      Animating poster images into short videos
+  Parameters:
+    - input_image:     base64 data URI
+    - motion_bucket_id: 127 (controls amount of motion)
+    - fps:             7 (frames per second)
+    - cond_aug:        0.02 (conditioning augmentation)
+  Processing:   Asynchronous (poll for completion)
+  Pricing:      ~$0.03 - $0.05 per video generation
+
+
+================================================================================
+7. API ROUTES - COMPLETE REFERENCE
+================================================================================
+
+------------------------------------------------------------------------------
+7.1 AI-POWERED ROUTES
+------------------------------------------------------------------------------
+
+POST /api/chat
+  - Body: { messages[], customization?, conversationId? }
+  - Returns: { content, ads[], conversationId }
+  - Rate Limit: 20 requests/minute
+  - Auth: Optional (saves to DB if authenticated)
+
+POST /api/generate-image
+  - Body: { headline, primaryText, callToAction, platform, theme,
+            colorPalette, audience, language, adId }
+  - Returns: { imageUrl }
+  - Rate Limit: 5 requests/minute
+  - Auth: Required
+
+POST /api/generate-video
+  - Body: { headline, primaryText, callToAction, platform, theme,
+            colorPalette, audience, language, adId, imageUrl? }
+  - Returns: { predictionId, status, sourceImageUrl }
+  - Rate Limit: 3 requests/5 minutes
+  - Auth: Required
+
+GET /api/generate-video/[predictionId]
+  - Returns: { status, videoUrl?, sourceImageUrl? }
+  - Polls Replicate for video generation status
+  - Auth: Required
+
+POST /api/tts
+  - Body: { text }
+  - Returns: audio/mpeg binary buffer
+  - Rate Limit: 30 requests/minute
+
+POST /api/transcribe
+  - Body: FormData with "audio" file
+  - Returns: { text }
+
+------------------------------------------------------------------------------
+7.2 DATA ROUTES
+------------------------------------------------------------------------------
+
+GET/POST /api/ads
+  - GET: List user's ads (with pagination, filtering)
+  - POST: Create a new ad
+
+GET/PUT/DELETE /api/ads/[id]
+  - CRUD operations on a single ad
+
+POST /api/ads/[id]/feedback
+  - Add feedback/rating to an ad
+
+GET/POST /api/conversations
+  - GET: List user's conversations
+  - POST: Create a new conversation
+
+GET/DELETE /api/conversations/[id]
+  - GET: Retrieve conversation with all messages
+  - DELETE: Delete a conversation
+
+GET/POST /api/campaigns
+  - Campaign CRUD
+
+GET/PUT/DELETE /api/campaigns/[id]
+  - Single campaign operations
+
+GET /api/analytics
+  - Returns aggregated stats (impressions, clicks, top ads)
+
+GET/PUT /api/user
+  - User profile operations
+
+POST /api/signup
+  - User registration with bcrypt password hashing
+  - Rate Limit: 5 requests/15 minutes
+
+
+================================================================================
+8. SECURITY FEATURES
+================================================================================
+
+------------------------------------------------------------------------------
+8.1 PROMPT INJECTION DETECTION
+------------------------------------------------------------------------------
+File: src/lib/sanitize.ts
+
+16 regex patterns detect common injection attempts:
+  - "ignore previous instructions"
+  - "disregard previous"
+  - "forget your instructions"
+  - "you are now a [non-ad role]"
+  - "system:" prefix injection
+  - "[INST]" and "<<SYS>>" token injection
+  - "act as [non-marketing role]"
+  - "pretend you're [non-ad role]"
+  - "override your system/prompt"
+  - "reveal your system/prompt"
+  - "what are your instructions"
+  - "DAN" (Do Anything Now)
+  - "do anything now"
+  - "jailbreak"
+
+When detected: threats are logged with IP address, input is still sanitized
+and processed (does not block the request, but staff can monitor).
+
+------------------------------------------------------------------------------
+8.2 XSS PROTECTION
+------------------------------------------------------------------------------
+6 HTML/script patterns:
+  - <script> tags
+  - javascript: protocol
+  - Event handler attributes (onerror, onload, onclick, onmouseover)
+  - <iframe>, <object>, <embed> tags
+
+All HTML tags are stripped from user input. Angle brackets are removed.
+
+------------------------------------------------------------------------------
+8.3 RATE LIMITING
+------------------------------------------------------------------------------
+File: src/lib/rate-limit.ts
+
+In-memory Map-based rate limiting per IP address:
+  - Chat:     20 requests / 1 minute
+  - TTS:      30 requests / 1 minute
+  - Image:    5 requests / 1 minute
+  - Video:    3 requests / 5 minutes
+  - Signup:   5 requests / 15 minutes
+  - Default:  60 requests / 1 minute
+
+Returns HTTP 429 with Retry-After header when exceeded.
+Expired entries cleaned every 5 minutes.
+
+------------------------------------------------------------------------------
+8.4 API KEY VALIDATION
+------------------------------------------------------------------------------
+All 5 AI-powered routes validate that API keys are configured before
+processing requests. Returns HTTP 503 with a helpful error message if
+keys are missing or still set to placeholder values.
+
+------------------------------------------------------------------------------
+8.5 AUTHENTICATION MIDDLEWARE
+------------------------------------------------------------------------------
+File: src/middleware.ts
+
+All /dashboard/* routes are protected. Unauthenticated users are redirected
+to /login. Uses NextAuth v5 JWT session validation.
+
+------------------------------------------------------------------------------
+8.6 INPUT LENGTH LIMITS
+------------------------------------------------------------------------------
+User messages are truncated to 5,000 characters maximum to prevent
+abuse and excessive API costs.
+
+
+================================================================================
+9. APPLICATION FLOWS
+================================================================================
+
+------------------------------------------------------------------------------
+9.1 AUTHENTICATION FLOW
+------------------------------------------------------------------------------
+
+New User Registration:
+  1. User visits /signup
+  2. Enters name, email, password
+  3. POST /api/signup -> bcrypt hash password -> Prisma create User
+  4. Redirected to /login
+  5. Signs in with credentials
+  6. NextAuth creates JWT session
+  7. Redirected to /dashboard
+
+Google OAuth:
+  1. User clicks "Sign in with Google" on /login
+  2. Redirected to Google consent screen
+  3. Google returns auth code to callback URL
+  4. NextAuth exchanges code for tokens, gets user profile
+  5. Prisma upserts User record (creates if new)
+  6. JWT session created
+  7. Redirected to /dashboard
+
+------------------------------------------------------------------------------
+9.2 AD GENERATION FLOW (Chat)
+------------------------------------------------------------------------------
+
+  1. User opens /dashboard -> Chat Window is the main interface
+  2. User types or speaks a message about their product
+  3. Message goes through sanitization (injection detection, XSS stripping)
+  4. Customization panel values are attached if configured
+  5. POST /api/chat with messages array + customization object
+  6. Server builds system prompt (base prompt + customization context)
+  7. OpenAI GPT-4o-mini processes the conversation
+  8. Response is parsed for ```json:ads blocks
+  9. If ads found: JSON parsed, ads saved to DB, conversation persisted
+  10. Response returned: { content, ads[], conversationId }
+  11. Frontend renders message bubble + ad preview cards
+  12. If voice mode active: text content sent to TTS for audio playback
+
+------------------------------------------------------------------------------
+9.3 VOICE INTERACTION FLOW
+------------------------------------------------------------------------------
+
+  Speaking to AI:
+  1. User clicks microphone button
+  2. Browser requests microphone permission (getUserMedia)
+  3. MediaRecorder starts capturing audio
+  4. AudioContext + AnalyserNode monitors audio levels
+  5. requestAnimationFrame loop checks RMS audio level
+  6. If RMS < 0.01 for 2+ seconds -> auto-stop recording
+  7. Audio blob created from recorded chunks
+  8. POST /api/transcribe with FormData containing audio file
+  9. Whisper transcribes audio to text
+  10. Transcribed text placed in chat input
+  11. User can edit or send immediately
+
+  AI Speaking Back:
+  1. AI response text received from /api/chat
+  2. Text sent to POST /api/tts
+  3. TTS-1 (nova voice) generates audio/mpeg buffer
+  4. Frontend creates AudioContext, decodes ArrayBuffer
+  5. Audio played through speakers
+  6. Play/pause state tracked in Zustand store
+
+------------------------------------------------------------------------------
+9.4 POSTER IMAGE GENERATION FLOW
+------------------------------------------------------------------------------
+
+  1. Ad preview card displayed in chat
+  2. User clicks "Generate Poster" button
+  3. POST /api/generate-image with ad details + customization
+  4. Server constructs DALL-E 3 prompt from all parameters
+  5. DALL-E 3 generates 1024x1024 image (b64_json format)
+  6. Image decoded from base64, saved to /public/generated-images/
+  7. Ad record updated with imageUrl in database
+  8. Response: { imageUrl } -> frontend displays the poster
+  9. Image appears in the ad card and on the /dashboard/ads page
+
+------------------------------------------------------------------------------
+9.5 VIDEO GENERATION FLOW
+------------------------------------------------------------------------------
+
+  1. User clicks "Generate Video" on an ad card
+  2. VideoPreview component enters step-by-step generation mode
+
+  Step 1 - Source Image:
+  3. If ad already has a poster image -> use it as source
+  4. If no image -> POST /api/generate-video triggers DALL-E 3 generation
+  5. Image converted to base64 data URI
+
+  Step 2 - Video Rendering:
+  6. Base64 image sent to Replicate Stable Video Diffusion
+  7. Replicate returns prediction ID (async processing)
+  8. Ad record updated: videoStatus="processing", replicateId stored
+  9. Frontend starts polling GET /api/generate-video/[predictionId]
+  10. Poll every 5 seconds, display progress bar
+  11. Maximum 60 polls (5-minute timeout)
+
+  Step 3 - Download & Save:
+  12. When Replicate status = "succeeded", video URL returned
+  13. Video downloaded from Replicate CDN
+  14. Saved locally to /public/generated-videos/
+  15. Ad record updated: videoUrl set, videoStatus="succeeded"
+  16. Video auto-plays in the preview component
+
+  Error Handling:
+  - If Replicate status = "failed" -> show error with retry button
+  - If polling times out -> show timeout error with retry
+  - Network errors -> show error state with retry option
+
+
+================================================================================
+10. STATE MANAGEMENT (Zustand)
+================================================================================
+
+------------------------------------------------------------------------------
+10.1 CHAT STORE (src/store/chat-store.ts)
+------------------------------------------------------------------------------
+
+State:
+  - messages: ChatMessage[]       (conversation messages)
+  - generatedAds: GeneratedAd[]   (latest batch of generated ads)
+  - isLoading: boolean            (API call in progress)
+  - conversationId: string | null (current conversation)
+  - voiceState: VoiceState        (recording status, audio playback)
+  - customization: AdCustomization (panel settings)
+
+Key interfaces:
+  ChatMessage: { role, content, ads?, timestamp }
+  GeneratedAd: { headline, primaryText, description, callToAction,
+                 platform, hashtags[], imageUrl?, videoUrl? }
+  VoiceState:  { isRecording, isPlaying, audioRef }
+
+Actions:
+  - sendMessage()    -> POST /api/chat
+  - setCustomization()
+  - clearConversation()
+  - loadConversation()
+
+------------------------------------------------------------------------------
+10.2 UI STORE (src/store/ui-store.ts)
+------------------------------------------------------------------------------
+
+State:
+  - sidebarOpen: boolean
+  - theme: "light" | "dark"
+
+Actions:
+  - toggleSidebar()
+  - setTheme()
+
+
+================================================================================
+11. ENVIRONMENT VARIABLES
+================================================================================
+
+Required in frontend/.env.local:
+
+  AUTH_SECRET=<random-256-bit-hex-string>
+    Purpose: NextAuth JWT signing key
+    Generate: openssl rand -hex 32
+
+  NEXT_PUBLIC_API_URL=http://localhost:3000/api
+    Purpose: Frontend API base URL (must match Next.js port)
+
+  OPENAI_API_KEY=sk-proj-...
+    Purpose: OpenAI API authentication
+    Used by: Chat, Image Gen, TTS, Transcription
+    Get from: https://platform.openai.com/api-keys
+
+  REPLICATE_API_TOKEN=r8_...
+    Purpose: Replicate API authentication
+    Used by: Video generation (Stable Video Diffusion)
+    Get from: https://replicate.com/account/api-tokens
+
+  GOOGLE_CLIENT_ID=...apps.googleusercontent.com
+    Purpose: Google OAuth sign-in
+    Get from: https://console.cloud.google.com/apis/credentials
+
+  GOOGLE_CLIENT_SECRET=GOCSPX-...
+    Purpose: Google OAuth sign-in
+    Get from: Same as above
+
+  DATABASE_URL="file:./dev.db"
+    Purpose: SQLite database file path (in prisma/ directory)
+    Note: Set automatically by Prisma, usually in schema.prisma
+
+
+================================================================================
+12. RATE LIMITS SUMMARY
+================================================================================
+
+  Endpoint       | Max Requests | Time Window
+  ---------------|--------------|------------
+  Chat           | 20           | 1 minute
+  TTS            | 30           | 1 minute
+  Image Gen      | 5            | 1 minute
+  Video Gen      | 3            | 5 minutes
+  User Signup    | 5            | 15 minutes
+  Default (other)| 60           | 1 minute
+
+  Response when exceeded: HTTP 429 Too Many Requests
+  Headers included: Retry-After, X-RateLimit-Limit,
+                    X-RateLimit-Remaining, X-RateLimit-Reset
+
+
+================================================================================
+13. FUTURE ENHANCEMENTS
+================================================================================
+
+1. A/B TESTING ENGINE
+   - Generate multiple ad variants automatically
+   - Track performance metrics (CTR, conversion rate)
+   - Use statistical significance to determine winner
+   - Auto-optimize ad copy based on performance data
+
+2. DIRECT PLATFORM PUBLISHING
+   - Facebook/Meta Ads API integration
+   - Google Ads API integration
+   - LinkedIn Marketing API integration
+   - One-click publish from AdGen to ad platform
+
+3. ADVANCED ANALYTICS
+   - Real-time performance dashboards
+   - Cost per acquisition (CPA) tracking
+   - ROI calculations per ad/campaign
+   - Audience insights and demographic breakdowns
+   - Export reports to PDF/CSV
+
+4. AI IMAGE EDITING
+   - Edit generated posters (add text overlays, resize for platform)
+   - Brand kit support (logo, fonts, brand colors)
+   - Template library with customizable layouts
+   - Background removal / replacement
+
+5. TEAM COLLABORATION
+   - Multi-user workspaces
+   - Role-based access (admin, editor, viewer)
+   - Approval workflows for ad review
+   - Comment and annotation on ad drafts
+
+6. ADVANCED VIDEO FEATURES
+   - Longer video durations
+   - Custom music/soundtrack addition
+   - Text-to-video with narration
+   - Multiple video aspect ratios (9:16 for Stories, 16:9 for YouTube)
+   - Video templates with branded intros/outros
+
+7. BRAND CONSISTENCY ENGINE
+   - Upload brand guidelines
+   - AI ensures all ads match brand voice and visual identity
+   - Brand dictionary for approved/prohibited terms
+   - Consistent color palette enforcement
+
+8. MULTI-CHANNEL CAMPAIGN MANAGER
+   - Create cross-platform campaigns from a single brief
+   - Auto-adapt copy for each platform's requirements
+   - Unified campaign calendar
+   - Budget allocation suggestions
+
+9. PERFORMANCE PREDICTION
+   - AI-powered ad performance scoring before publishing
+   - Engagement prediction based on historical data
+   - Recommendations for improvement
+   - Industry benchmarking
+
+10. SCALABILITY UPGRADES
+    - Migrate from SQLite to PostgreSQL for production
+    - Add Redis for rate limiting and caching
+    - Implement job queue (Bull/BullMQ) for video generation
+    - CDN integration for generated media assets
+    - Containerize with Docker for deployment
+
+
+================================================================================
+14. SETUP & INSTALLATION GUIDE
+================================================================================
+
+Prerequisites:
+  - Node.js 18+ installed
+  - npm or yarn package manager
+  - OpenAI API key (https://platform.openai.com)
+  - Replicate API token (https://replicate.com)
+  - Google OAuth credentials (optional, for Google sign-in)
+
+Steps:
+
+  1. Clone or navigate to the project directory
+     cd AdGen/frontend
+
+  2. Install dependencies
+     npm install
+
+  3. Set up environment variables
+     - Copy .env.example to .env.local (or create .env.local)
+     - Add your API keys (see Section 11 above)
+
+  4. Initialize the database
+     npx prisma generate
+     npx prisma db push
+
+  5. Run the development server
+     npm run dev
+
+  6. Open the application
+     http://localhost:3000
+
+  7. Create an account
+     - Go to /signup to create a new account
+     - Or use Google OAuth on the /login page
+
+  8. Start generating ads
+     - Go to /dashboard
+     - Type or speak your ad brief in the chat
+     - Configure the customization panel
+     - Generate ad copy, posters, and videos
+
+
+================================================================================
+15. API COST ESTIMATION (Per Usage)
+================================================================================
+
+  Action                    | Estimated Cost
+  --------------------------|----------------
+  1 chat generation (3 ads) | ~$0.001 - $0.003
+  1 poster image            | ~$0.040
+  1 video generation        | ~$0.030 - $0.050
+  1 minute voice input      | ~$0.006
+  1000 chars TTS output     | ~$0.015
+
+  Typical session (chat + 3 posters + 1 video):
+  ~$0.003 + $0.120 + $0.040 = ~$0.16 per session
+
+  Monthly estimate (100 sessions): ~$16.00
+
+
+================================================================================
+                              END OF DOCUMENTATION
+================================================================================

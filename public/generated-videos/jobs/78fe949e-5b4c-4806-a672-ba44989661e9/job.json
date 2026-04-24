@@ -1,0 +1,77 @@
+{
+  "jobId": "78fe949e-5b4c-4806-a672-ba44989661e9",
+  "status": "succeeded",
+  "createdAt": 1774679312622,
+  "adId": "cmn9y5cn3000ztb6kjzi6a39t",
+  "userId": "cmmfjwfnm0000103g75r5djr8",
+  "script": {
+    "brand_mood": "elegant",
+    "visual_style": "A sleek, modern aesthetic with vibrant colors and high-contrast lighting that emphasizes luxury and sophistication.",
+    "full_voiceover": "In a world where every moment matters, we seek elegance in the everyday. Whether it's closing a deal or capturing a memory, we desire technology that complements our lifestyle. Experience the seamless fusion of luxury and functionality with the Apple phone, where every detail is crafted for you. Step into confidence and connect with what truly matters. Discover elegance redefined; learn more today.",
+    "scenes": [
+      {
+        "scene": 1,
+        "name": "Hook",
+        "visual_prompt": "A gentle sunrise casts a golden hue over a bustling cityscape. A silhouetted figure strides confidently down a stylish urban street, reflecting the warm light as they adjust their jacket and check their watch. The camera glides smoothly through the scene, capturing the energy and promise of a new day filled with opportunities.",
+        "voiceover": "In a world where every moment matters, we seek elegance in the everyday.",
+        "overlay_text": "",
+        "overlay_position": "top"
+      },
+      {
+        "scene": 2,
+        "name": "Story",
+        "visual_prompt": "A close-up of hands typing on a sleek surface at a chic café. The hands pause, revealing a moment of contemplation as the person gazes towards a vibrant city backdrop. The camera gently tilts to reveal a group of friends laughing together, sharing moments that matter, highlighting the connections we treasure.",
+        "voiceover": "Whether it's closing a deal or capturing a memory, we desire technology that complements our lifestyle.",
+        "overlay_text": "",
+        "overlay_position": "bottom"
+      },
+      {
+        "scene": 3,
+        "name": "Product Reveal",
+        "visual_prompt": "A dynamic tracking shot reveals the Apple phone on a polished marble table, its sleek design reflecting the soft, diffused light around it. The camera zooms in, showcasing the elegant contours and vibrant display as the device illuminates with notifications, symbolizing its powerful capabilities.",
+        "voiceover": "Experience the seamless fusion of luxury and functionality with the Apple phone.",
+        "overlay_text": "Luxury Meets Functionality",
+        "overlay_position": "bottom"
+      },
+      {
+        "scene": 4,
+        "name": "Emotional Close",
+        "visual_prompt": "The camera captures a joyful moment as the silhouetted figure from the beginning is now confidently taking a selfie with friends, laughter echoing in the air. The warm sunlight frames them beautifully, creating a sense of connection and happiness. The scene fades to a soft focus, emphasizing the joy of the moment.",
+        "voiceover": "Step into confidence and connect with what truly matters.",
+        "overlay_text": "Learn More",
+        "overlay_position": "center"
+      }
+    ]
+  },
+  "predictions": [
+    {
+      "id": "zpjkxnnsjdrmt0cx6cg8k1c2cw",
+      "sceneIndex": 0,
+      "status": "succeeded",
+      "clipPath": "C:\\Users\\garvi\\OneDrive\\Desktop\\AdGen\\frontend\\public\\generated-videos\\jobs\\78fe949e-5b4c-4806-a672-ba44989661e9\\clip-0.mp4"
+    },
+    {
+      "id": "e2d8ajfb49rmt0cx6cgbhqb43w",
+      "sceneIndex": 1,
+      "status": "succeeded",
+      "clipPath": "C:\\Users\\garvi\\OneDrive\\Desktop\\AdGen\\frontend\\public\\generated-videos\\jobs\\78fe949e-5b4c-4806-a672-ba44989661e9\\clip-1.mp4"
+    },
+    {
+      "id": "qq4vnq0x39rmw0cx6cgrkbnfgm",
+      "sceneIndex": 2,
+      "status": "succeeded",
+      "clipPath": "C:\\Users\\garvi\\OneDrive\\Desktop\\AdGen\\frontend\\public\\generated-videos\\jobs\\78fe949e-5b4c-4806-a672-ba44989661e9\\clip-2.mp4"
+    },
+    {
+      "id": "313k6saej5rmt0cx6cgsjrprxc",
+      "sceneIndex": 3,
+      "status": "succeeded",
+      "clipPath": "C:\\Users\\garvi\\OneDrive\\Desktop\\AdGen\\frontend\\public\\generated-videos\\jobs\\78fe949e-5b4c-4806-a672-ba44989661e9\\clip-3.mp4"
+    }
+  ],
+  "ttsReady": false,
+  "voiceoverPath": "C:\\Users\\garvi\\OneDrive\\Desktop\\AdGen\\frontend\\public\\generated-videos\\jobs\\78fe949e-5b4c-4806-a672-ba44989661e9\\voiceover.mp3",
+  "mergeStarted": true,
+  "finalVideoUrl": "/generated-videos/commercial-1774679451799-78fe949e.mp4",
+  "error": null
+}
