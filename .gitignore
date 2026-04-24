@@ -26,7 +26,17 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
+.env
 .env*.local
+
+# local database and generated artifacts
+dev.db
+prisma/dev.db
+/public/generated-images/
+/public/generated-videos/
+/poster-*.png
+/tmpclaude-*
+/src/tmpclaude-*
 
 # vercel
 .vercel
