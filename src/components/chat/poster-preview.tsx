@@ -441,6 +441,41 @@ function buildFallbackPosterSpec(): DesignSpec {
   };
 }
 
+function drawPosterBackdrop(
+  ctx: CanvasRenderingContext2D,
+  designSpec: DesignSpec,
+  width: number,
+  height: number
+) {
+  const background = designSpec.backgroundColor || "#060B1A";
+  const gradientEnd = designSpec.gradientEnd || background;
+  const gradient = ctx.createLinearGradient(0, 0, width, height);
+  gradient.addColorStop(0, background);
+  gradient.addColorStop(1, gradientEnd);
+
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.save();
+  ctx.globalAlpha = 0.16;
+  ctx.fillStyle = designSpec.accentColor || "#7EE0FF";
+  ctx.beginPath();
+  ctx.arc(width * 0.82, height * 0.16, Math.min(width, height) * 0.16, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.globalAlpha = 0.08;
+  ctx.beginPath();
+  ctx.arc(width * 0.14, height * 0.82, Math.min(width, height) * 0.22, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,255,255,0.08)";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(28, 28, width - 56, height - 56);
+  ctx.restore();
+}
+
 function normalizePosterText(text: string) {
   return (text || "")
     .replace(/\s+/g, " ")
